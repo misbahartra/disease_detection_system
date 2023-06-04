@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Deteksi Penyakit Citra Digital</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <h1>Deteksi Penyakit Citra Digital aaaaaaa</h1>
+  <input type="file" id="inputImage" accept="image/*">
+  <br>
+  <button onclick="uploadImage()">Upload Gambar</button>
+  <button onclick="convertToGrayscale()">Grayscale</button>
+  <button onclick="calculateGLCM()">Hitung GLCM</button>
+  <button onclick="calculateColorMoments()">Color Moments</button>
+  <br>
+  <h2>Hasil Deteksi</h2>
+  <div id="result"></div>
+
+  <script>
+    function uploadImage() {
+      var fileInput = document.getElementById("inputImage");
+      var file = fileInput.files[0];
+      var formData = new FormData();
+      formData.append("image", file);
+
+      axios.post("/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      })
+      .then(function (response) {
+        document.getElementById("result").innerHTML = response.data;
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+
+    function convertToGrayscale() {
+      axios.post("/grayscale")
+      .then(function (response) {
+        document.getElementById("result").innerHTML = response.data;
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+
+    function calculateGLCM() {
+      axios.post("/glcm")
+      .then(function (response) {
+        document.getElementById("result").innerHTML = response.data;
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+
+    function calculateColorMoments() {
+      axios.post("/color-moments")
+      .then(function (response) {
+        document.getElementById("result").innerHTML = response.data;
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+  </script>
+</body>
+</html>

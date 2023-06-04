@@ -1,75 +1,79 @@
-import cv2
+from flask import Flask, render_template, request
+from PIL import Image
 import numpy as np
-from scipy.stats import moment
 from skimage.feature import greycomatrix, greycoprops
-from flask import Flask, request, render_template
+import os
 
 app = Flask(__name__)
+global image
+
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def calculate_color_moments(image):
-    # Memisahkan citra menjadi saluran warna
-    channels = cv2.split(image)
-    
-    color_moments = []
-    
-    for channel in channels:
-        # Menghitung momen warna (rata-rata, simpangan baku, skewness) untuk setiap saluran
-        moments = moment(channel.flatten(), moment=[0, 1, 2])
-        color_moments.extend(moments)
-    
-    return color_moments
+    r, g, b = image.split()
+    r_mean = np.mean(np.array(r))
+    g_mean = np.mean(np.array(g))
+    b_mean = np.mean(np.array(b))
+    r_std = np.std(np.array(r))
+    g_std = np.std(np.array(g))
+    b_std = np.std(np.array(b))
+    return r_mean, g_mean, b_mean, r_std, g_std, b_std
 
-def calculate_glcm_features(image):
-    # Mengubah citra ke skala keabuan
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    # Menghitung matriks GLCM
-    glcm = greycomatrix(gray, [1], [0], 256, symmetric=True, normed=True)
-    
-    # Menghitung fitur GLCM (kontras, homogenitas, energi, korelasi)
-    kontras = greycoprops(glcm, 'contrast')[0, 0]
-    homogenitas = greycoprops(glcm, 'homogeneity')[0, 0]
-    energi = greycoprops(glcm, 'energy')[0, 0]
-    korelasi = greycoprops(glcm, 'correlation')[0, 0]
-    
-    return kontras, homogenitas, energi, korelasi
-
-def detect_disease(color_moments, kontras, homogenitas, korelasi, energi):
-    # Logika deteksi penyakit berdasarkan nilai fitur
-    penyakit = ""
-    
-    if kontras > 100 and homogenitas > 0.8:
-        penyakit = "Penyakit A"
-    elif korelasi < 0.3 and energi > 0.5:
-        penyakit = "Penyakit B"
-    else:
-        penyakit = "Tidak Terdeteksi Penyakit"
-    
-    return penyakit
-
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/")
 def index():
-    if request.method == 'POST':
-        # Mendapatkan file gambar yang diunggah
-        file = request.files['image']
-        
-        # Membaca citra
-        image = cv2.imdecode(np.fromstring(file.read(), np.uint8), cv2.IMREAD_COLOR)
-        
-        # Menghitung momen warna
-        color_moments = calculate_color_moments(image)
-        
-        # Menghitung fitur GLCM
-        kontras, homogenitas, energi, korelasi = calculate_glcm_features(image)
-        
-        # Deteksi penyakit
-        penyakit = detect_disease(color_moments, kontras, homogenitas, korelasi, energi)
-        
-        # Merender template dengan hasil
-        return render_template('result.html', kontras=kontras, homogenitas=homogenitas,
-                               korelasi=korelasi, energi=energi, penyakit=penyakit)
-    
-    return render_template('index.html')
+    return render_template("index.html")
 
-if __name__ == '__main__':
+@app.route("/upload", methods=["POST"])
+def upload():
+    global image
+    image_file = request.files["image"]
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_file.filename)
+    image_file.save(image_path)
+    image = Image.open(image_path)
+    return "Gambar berhasil diunggah!"
+
+
+@app.route("/grayscale", methods=["POST"])
+def grayscale():
+    global image
+    gray_image = image.convert("L")
+    image = gray_image
+    return "Gambar berhasil diubah menjadi grayscale!"
+
+@app.route("/glcm", methods=["POST"])
+def calculate_glcm():
+    global image
+    gray_image = np.array(image)
+    glcm = greycomatrix(gray_image, [1], [0], symmetric=True, normed=True)
+    contrast = greycoprops(glcm, 'contrast')[0][0]
+    homogeneity = greycoprops(glcm, 'homogeneity')[0][0]
+    energy = greycoprops(glcm, 'energy')[0][0]
+    correlation = greycoprops(glcm, 'correlation')[0][0]
+    result = f"Nilai Kontras: {contrast}<br>"
+    result += f"Homogenitas: {homogeneity}<br>"
+    result += f"Energi: {energy}<br>"
+    result += f"Korelasi: {correlation}<br>"
+    return result
+
+@app.route("/color-moments", methods=["POST"])
+def calculate_color_moments_route():
+    global image
+    image_array = np.array(image)
+    r_mean = np.mean(image_array[:, :, 0])
+    g_mean = np.mean(image_array[:, :, 1])
+    b_mean = np.mean(image_array[:, :, 2])
+    r_std = np.std(image_array[:, :, 0])
+    g_std = np.std(image_array[:, :, 1])
+    b_std = np.std(image_array[:, :, 2])
+    result = f"Color Moments:<br>"
+    result += f"Rata-rata Red: {r_mean}<br>"
+    result += f"Rata-rata Green: {g_mean}<br>"
+    result += f"Rata-rata Blue: {b_mean}<br>"
+    result += f"Standar Deviasi Red: {r_std}<br>"
+    result += f"Standar Deviasi Green: {g_std}<br>"
+    result += f"Standar Deviasi Blue: {b_std}<br>"
+    return result
+
+if __name__ == "__main__":
     app.run(debug=True)
