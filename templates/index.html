@@ -72,11 +72,17 @@
         width: 40%;
         border-left: 2px solid #efefef;
     }
+
+    .result-area {
+        border-top: 2px solid #efefef;
+        width: 100%;
+        padding: 30px;
+        color: #727272;
+    }
 </style>
 
 <body>
 
-    <div id="result"></div>
 
     <div class="card">
         <nav> Sistem detekesi penyakit</nav>
@@ -108,17 +114,65 @@
                 <hr>
 
 
-                <div class="d-flex  flex-column  justify-content-around col-6 align-items-center mx-auto" style="height: 70%;">
+                <div class="d-flex  flex-column  justify-content-around col-6 align-items-center mx-auto"
+                    style="height: 70%;">
 
-                    <button class="btn btn-secondary w-100 " onclick="convertToGrayscale()"
-                        type="button">Preprocessing </button>
-                    <button class="btn btn-success w-100" onclick="convertToGrayscale()" type="button">Ekstrasi GLCM</button>
+                    <button class="btn btn-secondary w-100 " onclick="convertToGrayscale()" type="button">Preprocessing
+                    </button>
+                    <button class="btn btn-success w-100" onclick="convertToGrayscale()" type="button">Ekstrasi
+                        GLCM</button>
                     <button class="btn btn-warning w-100" onclick="convertToGrayscale()" type="button">Color
                         Moments</button>
-                        <button class="btn btn-danger w-100" onclick="convertToGrayscale()" type="button">Reset 
-                            </button>
+                    <button class="btn btn-danger w-100" onclick="convertToGrayscale()" type="button">Reset
+                    </button>
                 </div>
             </div>
+        </div>
+
+        <div class="result-area d-flex justify-content-around ">
+            
+            <table class="table table-bordered" style="width: 300px;">
+                <thead>
+                    <tr>
+                        <td>Homogenitas</td>
+                        <td>Energi</td>
+                        <td>Korelasi</td>
+                        <td>Kontras</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>33</td>
+                        <td>55</td>
+                        <td>20.99</td>
+                        <td>87</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="table table-bordered" style="width: 500px;">
+                <tr>
+                    <td>Rata-rata Red</td>
+                    <td>20.99</td>
+                    <td>Standar Deviasi Red</td>
+                    <td>99</td>
+                </tr>
+                <tr>
+                    <td>Rata-Rata Blue</td>
+                    <td>500.22</td>
+                    <td>Standar Deviasi Blue</td>
+                    <td>100</td>
+                </tr>
+                <tr>
+                    <td>Rata Rata Green </td>
+                    <td>99.02</td>
+                    <td>Standar Deviasi Green</td>
+                    <td>100</td>
+                </tr>
+            </table>
+            <div id="result"></div>
+
+
         </div>
 
     </div>
