@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+{% block head %}
+<script>
+    $(window).load(function () {
+        jQuery('#camera_wrap_1').camera({
+            height: '73,00%',
+            // thumbnails: true,
+            playPause: false,
+            time: 8000,
+            transPeriod: 900,
+            fx: 'simpleFade',
+            loader: 'none',
+            minHeight: '200px',
+            navigation: false
+        });
+
+        $().UItoTop({ easingType: 'easeOutQuart' });
+
+        $('#foo').carouFredSel({
+            auto: false,
+            responsive: true,
+            width: '100%',
+            prev: '#prev1',
+            next: '#next1',
+            scroll: 1,
+            items: {
+                height: 'auto',
+                width: 300,
+                visible: {
+                    min: 1,
+                    max: 1
+                }
+            },
+            mousewheel: false,
+            swipe: {
+                onMouse: true,
+                onTouch: true
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% block content %}
+
+    <div class="bg-1">
+        <div class="bg-2">
+            <div class="container_16">
+                <div class="row">
+                    <div class="grid_16 slider clearfix">
+                        <div class="camera_wrap camera_azure_skin" id="camera_wrap_1">
+                            <div data-src="{{ url_for('static', filename='images/jagung-1.jpg') }}">
+                                <div class="camera_caption fadeIn">
+                                    <!-- <div class="slider-t-1">100%</div> -->
+                                    <div class="slider-t-2">Deteksi Penyakit Cepat</div>
+                                </div>
+                            </div>
+                            <div data-src="{{ url_for('static', filename='images/jagung-2.jpg') }}">
+                                <div class="camera_caption fadeIn">
+                                    <!-- <div class="slider-t-1">only</div> -->
+                                    <div class="slider-t-2" style="font-size: 35px;">Meningkatkan Efisiensi </div>
+                                </div>
+                            </div>
+                            <div data-src="{{ url_for('static', filename='images/jagung-3.jpg') }}">
+                                <div class="camera_caption fadeIn">
+                                    <!-- <div class="slider-t-1">pro</div> -->
+                                    <div class="slider-t-2" style="font-size: 35px;">Kemudahan Penggunaan</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="shadow"></div>
+                <div class="row">
+                    <div class="grid_16">
+                        <div class="title-1">Deteksi Penyakit Daun Jagung</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="list_carousel responsive clearfix carousel-1">
+                        <ul id="foo" class="clearfix">
+                            <li class="grid_16">
+                                <div class="text-1">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Dicta earum placeat consequuntur laborum dolore rem excepturi dolorum maxime unde odit, voluptas minima asperiores ea. Pariatur labore architecto blanditiis velit voluptatum.</div>
+                            </li>
+
+                        </ul>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

@@ -161,4 +161,4 @@ cython_debug/
 #.idea/
 
 #Upload Folder
-uploads
+uploads/*

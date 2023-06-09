@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Service{% endblock %}
+{% block head %} 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/touchTouch.css') }}">
+<script>
+    $(window).load( function(){
+        $().UItoTop({ easingType: 'easeOutQuart' });
+        $('form').forms({
+            ownerEmail:'#'
+        }); 
+    });
+</script>
+
+{% endblock %}
+{% block content %}
+<div class="content">
+    <div class="bg-1">
+        <div class="container_16">
+            <div class="row row-1 p2">
+                <div class="grid_4 prefix_1 bord-1 btn-wrapper">
+                    <div class="maxheight">
+                        <div class="aligncenter"><img src="{{ url_for('static', filename='images/page-1_img-1.png' ) }}" alt=""></div>
+                        <h2>Preprocessing</h2>
+                        <h4>Preprocessing</h4>
+                        <div>Beciegast nveriti vitaesaert asety kertya aset aplicabrde ertyas nemo eniptaiades.</div>
+                       
+                    </div>
+                </div>
+                <div class="grid_4 prefix_1 bord-1 btn-wrapper">
+                    <div class="maxheight">
+                        <div class="aligncenter"><img src="{{ url_for('static', filename='images/page-1_img-2.png' ) }}" alt=""></div>
+                        <h2>Ekstrasi GLCM</h2>
+                        <h4>Ekstrasi GLCM</h4>
+                        <div>Asety kscabo nerafaes kertyu ersvitae ertyasnemo lasec vasptaiades goertayse.</div>
+                       
+                    </div>
+                </div>
+                <div class="grid_4 prefix_1 bord-1 btn-wrapper">
+                    <div class="maxheight">
+                        <div class="aligncenter"><img src="{{ url_for('static', filename='images/page-1_img-1.png' ) }}" alt=""></div>
+                        <h2> Color Moment</h2>
+                        <h4>Color Moment</h4>
+                        <div>Beciegast nveriti vitaesaert asety kertya aset aplicabrde ertyas nemo eniptaiades.</div>
+                       
+                    </div>
+                </div>
+                <div class="grid_4 prefix_1 btn-wrapper">
+                    <div class="maxheight">
+                        <div class="aligncenter"><img src="{{ url_for('static', filename='images/page-1_img-3.png' ) }}" alt=""></div>
+                        <h2>Reset</h2>
+                        <h4>Reset</h4>
+                        <div>Miiasrdas nveriti vitaesaert aplicabrdasety kertya asee ertyas nemo eniptaiades.</div>
+                      
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  
+</div>
+
+{% endblock %}

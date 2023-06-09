@@ -1,12 +1,17 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for, send_from_directory
 from PIL import Image
 import numpy as np
 from skimage.feature import greycomatrix, greycoprops
 import os
+import time
 
 app = Flask(__name__)
-global image
 
+
+image = None
+gray_image = None
+
+counter = 1
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -22,30 +27,53 @@ def calculate_color_moments(image):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("home.html")
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
+
+@app.route("/app")
+def apps():
+    return render_template("app.html")
+
+@app.route("/service")
+def service():
+    return render_template("service.html")
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    global image
+    global image, counter
     image_file = request.files["image"]
-    image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_file.filename)
-    image_file.save(image_path)
-    image = Image.open(image_path)
-    return "Gambar berhasil diunggah!"
+    image = Image.open(image_file)
+    timestamp = int(time.time())
+    image_name = f"image_{timestamp}.jpg"
+    image_path = "uploads/" + image_name
+    image.save(image_path)  # Simpan gambar di folder uploads
+    image_url = "/uploads/" + image_name  # URL gambar yang akan ditampilkan di halaman result
+    counter += 1
+    return image_url
 
 
 @app.route("/grayscale", methods=["POST"])
-def grayscale():
-    global image
+def convert_to_grayscale_route():
+    global image, counter, gray_image
     gray_image = image.convert("L")
-    image = gray_image
-    return "Gambar berhasil diubah menjadi grayscale!"
+    timestamp = int(time.time())
+    filename = f"gray_image_{timestamp}.jpg"
+    gray_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return filename
 
 @app.route("/glcm", methods=["POST"])
 def calculate_glcm():
-    global image
-    gray_image = np.array(image)
-    glcm = greycomatrix(gray_image, [1], [0], symmetric=True, normed=True)
+    global gray_image
+    gray_image_array = np.array(gray_image)
+    glcm = greycomatrix(gray_image_array, [1], [0], symmetric=True, normed=True)
     contrast = greycoprops(glcm, 'contrast')[0][0]
     homogeneity = greycoprops(glcm, 'homogeneity')[0][0]
     energy = greycoprops(glcm, 'energy')[0][0]
@@ -54,6 +82,13 @@ def calculate_glcm():
     result += f"Homogenitas: {homogeneity}<br>"
     result += f"Energi: {energy}<br>"
     result += f"Korelasi: {correlation}<br>"
+    glcm_results = {
+        'contrast': contrast,
+        'homogeneity': homogeneity,
+        'energy': energy,
+        'correlation': correlation
+    }
+
     return result
 
 @app.route("/color-moments", methods=["POST"])
@@ -74,6 +109,10 @@ def calculate_color_moments_route():
     result += f"Standar Deviasi Green: {g_std}<br>"
     result += f"Standar Deviasi Blue: {b_std}<br>"
     return result
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == "__main__":
     app.run(debug=True)

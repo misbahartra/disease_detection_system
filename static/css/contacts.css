@@ -1,0 +1,130 @@
+/*contacts*/
+
+	.adress span {
+		display: inline-block;
+		width: 91px;
+	} 
+		.adress span.e-mail {
+			width:auto;
+		}
+		.adress a {
+			text-decoration: none;
+			font-weight: normal;
+		}
+			.adress a:hover {
+				text-decoration: underline;
+			}
+	.map_wrapper {
+		display: block;
+	}
+		dl.adress {
+			margin-top: 24px;
+		}
+
+	#map_canvas {
+		width: 100%;
+		height: 380px;
+		margin-top: 7px;
+	}
+	#contact-form {
+		position: relative;
+		padding-bottom: 10px;
+		padding-top: 6px;
+	}
+	#contact-form .error, #contact-form .empty {
+		text-align: right;
+		color: red;
+		right: 10px;
+		top: 5px;
+		display: none;
+		overflow: hidden;
+		position: absolute;
+		font-size: 11px;
+	}
+	#contact-form .success {
+		width: 100%;
+		top: 0px;
+		left: 0;
+		z-index: 99;
+		text-align: center;
+		padding: 47px 0;
+		color: #333333;
+		background: #ffffff;
+		border: 1px solid #e5e5e5;
+		position: absolute;
+		display: none;
+		-webkit-box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		-ms-box-sizing: border-box;
+		-o-box-sizing: border-box;
+		box-sizing: border-box;
+	}
+	#contact-form label {
+		display: inline-block;
+		position: relative;
+		min-height: 46px;
+	}
+	#contact-form label.message {
+		padding-bottom: 0;
+	}
+	#contact-form textarea {
+		overflow: auto;
+		width: 100%;
+		height: 247px;
+		resize: none;
+		margin: 0 0 0 0;
+	}
+	#contact-form label input,
+	#contact-form label textarea {
+		-webkit-box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		-ms-box-sizing: border-box;
+		-o-box-sizing: border-box;
+		box-sizing: border-box;
+		border: 1px solid #e5e5e5;
+		background: #ffffff;
+		position: relative;
+		float: left;
+		border-radius:0px;
+		color: #808080;
+		font: 14px/18px Arial, sans-serif;
+	}
+	#contact-form label input {
+		height:36px;
+		width: 347px;
+		box-shadow: none !important;
+		padding: 7px 9px 7px 14px;
+		outline: none;
+	}
+	#contact-form label textarea {
+		height: 251px;
+		overflow: auto;
+		width: 580px;
+		padding: 7px 9px 9px 14px;
+		margin: 0px;
+		resize: none;
+	}
+	.form_buttons {
+		text-align: right;
+	}
+	.form_buttons a {margin-left: 17px;margin-top: 30px;}
+
+@media only screen and (max-width: 995px) {
+	
+	#contact-form label {display: block; width: 100%;}
+	#contact-form label input {	width: 100%;}
+	#contact-form label textarea {	width: 100%;}
+
+	#map_canvas {width: 100%;}
+}
+@media only screen and (max-width: 767px) {
+
+
+}
+@media only screen and (max-width: 480px) {
+
+}
+@media only screen and (max-width: 320px) {
+
+}
+

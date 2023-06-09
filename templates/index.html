@@ -34,7 +34,7 @@
 
     }
 
-    nav {
+    .card nav {
         width: 100%;
         color: #727272;
         text-transform: uppercase;
@@ -83,9 +83,29 @@
 
 <body>
 
+    <div class="container align-self-start header">
+
+        <nav class="navbar navbar-expand-lg navbar-light bg-light  justify-content-center">
+            <ul class="nav ">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Link</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#">Disabled</a>
+                </li>
+            </ul>
+        </nav>
+
+    </div>
 
     <div class="card">
-        <nav> Sistem detekesi penyakit</nav>
+        <nav> Sistem detekesi penyakit aasz</nav>
 
         <div class="row">
             <div class="photo">
@@ -119,17 +139,17 @@
 
                     <button class="btn btn-secondary w-100 " onclick="convertToGrayscale()" type="button">Preprocessing
                     </button>
-                    <button class="btn btn-success w-100" onclick="convertToGrayscale()" type="button">Ekstrasi
+                    <button class="btn btn-success w-100" onclick="calculateGLCM()" type="button">Ekstrasi
                         GLCM</button>
-                    <button class="btn btn-warning w-100" onclick="convertToGrayscale()" type="button">Color
+                    <button class="btn btn-warning w-100" onclick="calculateColorMoments()" type="button">Color
                         Moments</button>
-                    <button class="btn btn-danger w-100" onclick="convertToGrayscale()" type="button">Reset
+                    <button class="btn btn-danger w-100" onclick="reset()" type="button">Reset
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="result-area d-flex justify-content-around ">
+        <!-- <div class="result-area d-flex justify-content-around ">
             
             <table class="table table-bordered" style="width: 300px;">
                 <thead>
@@ -173,7 +193,7 @@
             <div id="result"></div>
 
 
-        </div>
+        </div> -->
 
     </div>
 
@@ -231,6 +251,10 @@
     </div>
 
     <script>
+        // A $( document ).ready() block.
+        $(document).ready(function () {
+            console.log("ready!");
+        });
         function uploadImage() {
             var fileInput = document.getElementById("inputImage");
             var file = fileInput.files[0];
@@ -247,6 +271,7 @@
                     var imageUrl = URL.createObjectURL(file);
                     document.getElementById("uploadedImage").src = imageUrl;
                     document.getElementById("uploadedImage").style.display = "block";
+                    console.log("Haloo");
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -283,6 +308,7 @@
                     console.log(error);
                 });
         }
+    
     </script>
 </body>
 

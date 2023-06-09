@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Service{% endblock %}
+{% block head %} 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/contacts.css') }}">
+<script>
+    $(window).load( function(){
+        $().UItoTop({ easingType: 'easeOutQuart' });
+        $('form').forms({
+            ownerEmail:'#'
+        }); 
+    });
+</script>
+
+{% endblock %}
+{% block content %}
+
+<div class="content">
+    <div class="container_16">
+        <div class="row">
+            <div class="map_wrapper grid_5 suffix_1">
+                <h2>Contact Info</h2>
+                <iframe id="map_canvas"src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3952.901203778133!2d111.99951017582391!3d-7.800283677430639!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e785729b234e955%3A0x376d16cb3654499f!2sUniversitas%20Nusantara%20PGRI%20Kediri!5e0!3m2!1sid!2sid!4v1686135303905!5m2!1sid!2sid" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </iframe>
+                
+            </div>
+            <article class="grid_10">
+                <h2>Get In Touch</h2>
+                <form id="contact-form">
+                    <div class="success">Contact form submitted!<br>
+                        <strong>We will be in touch soon.</strong>
+                    </div>
+                    <fieldset>
+                        <label class="name">
+                            <input type="text" value="Name:">
+                            <span class="error">*This is not a valid name.</span> 
+                            <span class="empty">*This field is required.</span>
+                        </label>
+                        <label class="email">
+                            <input type="email" value="E-mail:">
+                            <span class="error">*This is not a valid email address.</span> 
+                            <span class="empty">*This field is required.</span>
+                        </label>
+                        <label class="phone">
+                            <input type="tel" value="Phone:">
+                            <span class="error">*This is not a valid phone number.</span> 
+                            <span class="empty">*This field is required.</span>
+                        </label>
+                        <label class="message">
+                            <textarea>Message:</textarea>
+                            <span class="error">*The message is too short.</span> 
+                            <span class="empty">*This field is required.</span>
+                        </label>
+                        <div class="form_buttons">
+                             <a href="#" class="btn-2" data-type="reset">Clear</a>
+                            <a href="#" class="btn-2" data-type="submit">submit</a>
+                        </div>
+                    </fieldset>
+                </form>
+            </article>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
