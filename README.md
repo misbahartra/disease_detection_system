@@ -10,29 +10,37 @@ url: https://www.python.org/ftp/python/3.8.0/python-3.8.0-amd64.exe
 
 ## Deployment
 
-setup environment
+1) Clone Project
+```bash
+  git clone https://github.com/misbahartra/disease_detection_system.git
+```
+Setelah di clone, buat folder dengan nama "uploads"
+
+
+
+2) setup environment
 ```bash
   virtualenv nama_env
 ```
 
 
-lalu aktifkan env nya
+3) lalu aktifkan env nya
 ```bash
   nama_env\Scripts\activate
 ```
 
 
-setelah env aktif, lanjut install dependency
+4) setelah env aktif, lanjut install dependency
 ```bash
    pip install -r requirements.txt
 ```
 
-jalankan aplikasi
+5) jalankan aplikasi
 ```bash
   python app.py
 ```
 
-Lalu buka http://localhost:5000/
+5) Lalu buka http://localhost:5000/
 
 
 
