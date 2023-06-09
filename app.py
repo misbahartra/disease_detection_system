@@ -54,8 +54,8 @@ def upload():
     timestamp = int(time.time())
     image_name = f"image_{timestamp}.jpg"
     image_path = "uploads/" + image_name
-    image.save(image_path)  # Simpan gambar di folder uploads
-    image_url = "/uploads/" + image_name  # URL gambar yang akan ditampilkan di halaman result
+    image.save(image_path)  
+    image_url = "/uploads/" + image_name  
     counter += 1
     return image_url
 
@@ -89,7 +89,7 @@ def calculate_glcm():
         'correlation': correlation
     }
 
-    return result
+    return glcm_results
 
 @app.route("/color-moments", methods=["POST"])
 def calculate_color_moments_route():
@@ -108,7 +108,15 @@ def calculate_color_moments_route():
     result += f"Standar Deviasi Red: {r_std}<br>"
     result += f"Standar Deviasi Green: {g_std}<br>"
     result += f"Standar Deviasi Blue: {b_std}<br>"
-    return result
+    color_moment_result = {
+        'r_mean': r_mean,
+        'g_mean': g_mean,
+        'b_mean': b_mean,
+        'r_std': r_std,
+        'g_std': g_std,
+        'b_std': b_std,
+    }
+    return color_moment_result
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
