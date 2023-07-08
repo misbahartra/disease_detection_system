@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, send_from_directory
+from flask import Flask, render_template, request, url_for, send_from_directory, jsonify
 from PIL import Image
 import numpy as np
 from skimage.feature import greycomatrix, greycoprops
@@ -20,16 +20,54 @@ counter = 1
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Fungsi untuk menghitung momen warna
 def calculate_color_moments(image):
-    r, g, b = image.split()
-    r_mean = np.mean(np.array(r))
-    g_mean = np.mean(np.array(g))
-    b_mean = np.mean(np.array(b))
-    r_std = np.std(np.array(r))
-    g_std = np.std(np.array(g))
-    b_std = np.std(np.array(b))
+    if image.mode == "RGB":
+        r, g, b = image.split()
+        r_mean = np.mean(np.array(r))
+        g_mean = np.mean(np.array(g))
+        b_mean = np.mean(np.array(b))
+        r_std = np.std(np.array(r))
+        g_std = np.std(np.array(g))
+        b_std = np.std(np.array(b))
+    elif image.mode == "CMYK":
+        # Konversi gambar CMYK ke RGB
+        image = image.convert("RGB")
+        r, g, b = image.split()
+        r_mean = np.mean(np.array(r))
+        g_mean = np.mean(np.array(g))
+        b_mean = np.mean(np.array(b))
+        r_std = np.std(np.array(r))
+        g_std = np.std(np.array(g))
+        b_std = np.std(np.array(b))
+    elif image.mode == "L":
+        # Jika gambar dalam skala abu-abu
+        gray_image = np.array(image)
+        r_mean = np.mean(gray_image)
+        g_mean = np.mean(gray_image)
+        b_mean = np.mean(gray_image)
+        r_std = np.std(gray_image)
+        g_std = np.std(gray_image)
+        b_std = np.std(gray_image)
+    elif image.mode == "RGBA":
+        # Konversi gambar RGBA ke RGB
+        image = image.convert("RGB")
+        r, g, b = image.split()
+        r_mean = np.mean(np.array(r))
+        g_mean = np.mean(np.array(g))
+        b_mean = np.mean(np.array(b))
+        r_std = np.std(np.array(r))
+        g_std = np.std(np.array(g))
+        b_std = np.std(np.array(b))
+    else:
+        # Format gambar tidak didukung
+        print("Format gambar:", image.format)
+        print("Nama gambar:", image.filename)
+        raise ValueError("Format gambar tidak didukung.")
+        
     return r_mean, g_mean, b_mean, r_std, g_std, b_std
 
+# Fungsi untuk menghitung GLCM
 def calculate_glcm(image):
     # Mengubah gambar menjadi skala abu-abu dan array NumPy yang dapat diubah
     image_gray = np.array(image.convert("L"), dtype=np.uint8)
@@ -52,28 +90,32 @@ def extract_features(image):
     glcm_features = calculate_glcm(image)
     return np.concatenate([color_moments, glcm_features])
 
-
+# Route untuk halaman utama
 @app.route("/")
 def index():
     return render_template("home.html")
 
+# Route untuk halaman kontak
 @app.route("/contact")
 def contact():
     return render_template("contact.html")
 
+# Route untuk halaman aplikasi
 @app.route("/app")
 def apps():
     return render_template("app.html")
 
+# Route untuk halaman service
 @app.route("/service")
 def service():
     return render_template("service.html")
 
+# Route untuk halaman about
 @app.route("/about")
 def about():
     return render_template("about.html")
 
-
+# Route untuk mengunggah gambar
 @app.route("/upload", methods=["POST"])
 def upload():
     global image
@@ -92,6 +134,7 @@ def upload():
     image_url = "/uploads/test_image.jpg"
     return image_url
 
+# Route untuk mengubah gambar menjadi skala abu-abu
 @app.route("/grayscale", methods=["POST"])
 def convert_to_grayscale_route():
     global image, gray_image
@@ -106,6 +149,7 @@ def convert_to_grayscale_route():
     gray_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return filename
 
+# Route untuk menghitung GLCM
 @app.route("/glcm", methods=["POST"])
 def _glcm():
     global gray_image
@@ -128,7 +172,7 @@ def _glcm():
 
     return glcm_results
 
-
+# Route untuk menghitung momen warna
 @app.route("/color-moments", methods=["POST"])
 def calculate_color_moments_route():
     global image
@@ -160,18 +204,18 @@ def calculate_color_moments_route():
     return color_moment_result
 
 
-
+# Route untuk mengakses file yang diunggah
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-
+# Fungsi untuk melakukan pengujian model
 def test_model(data, labels):
     print(image)
     # Inisialisasi model SVM
     model = SVC()
 
-    # Pelatihan model dengan fitur Color Moments dan label kelas
+    # Pelatihan model dengan fitur Color Moments & GLCM dan label kelas
     model.fit(data, labels)
 
     # Contoh pengujian dengan data baru
@@ -182,7 +226,7 @@ def test_model(data, labels):
     # Prediksi kelas menggunakan model yang telah dilatih
     predicted_class = model.predict([test_features])
 
-    # Menampilkan hasil prediksi
+    # Menampilkan hasil prediksi ke terminal
     print("Prediksi kelas:", predicted_class)
 
     # Melakukan prediksi pada data uji
@@ -199,33 +243,7 @@ def test_model(data, labels):
     return json.dumps(result)
 
 
-def train_model(data, labels):
-    # Split data menjadi data training dan data uji dengan perbandingan 80:20
-    X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
-
-    # Inisialisasi model SVM
-    model = SVC(kernel='linear')
-
-    # Melatih model dengan data training
-    model.fit(X_train, y_train)
-
-    # Memprediksi label untuk data uji
-    y_pred = model.predict(X_test)
-
-    # Menampilkan hasil evaluasi model
-    classification_result = classification_report(y_test, y_pred, output_dict=True)
-    accuracy = accuracy_score(y_test, y_pred) * 100
-
-    # Buat dictionary dengan hasil laporan klasifikasi dan akurasi
-    result = {
-        "classification_report": classification_result,
-        "accuracy": accuracy.tolist()
-    }
-
-    # Mengembalikan hasil sebagai JSON
-    return json.dumps(result)
-    
-
+# Route untuk melatih model
 @app.route("/train", methods=["GET"])
 def train_model_route():
     print("Training sedang berjalan")
@@ -235,10 +253,10 @@ def train_model_route():
     labels = []
 
     for class_name in classes:
-        class_path = os.path.join(dataset_path, class_name)
-        image_files = os.listdir(class_path)
+        train_path = os.path.join(dataset_path, 'train', class_name)
+        image_files = os.listdir(train_path)
         for image_file in image_files:
-            image_path = os.path.join(class_path, image_file)
+            image_path = os.path.join(train_path, image_file)
             image = Image.open(image_path)
             features = extract_features(image)
             label = class_name.replace("-", " ").title()
@@ -249,16 +267,91 @@ def train_model_route():
     data = np.array(data)
     labels = np.array(labels)
 
-    # Panggil fungsi train_model dengan data dan label yang telah dikumpulkan
-    train_result = train_model(data, labels)
-    test_result = test_model(data, labels)
+    # Inisialisasi model SVM
+    model = SVC(kernel='linear')
+
+    # Melatih model dengan data training
+    model.fit(data, labels)
+
+    # Menampilkan hasil evaluasi model pada data training
+    y_pred_train = model.predict(data)
+    classification_result_train = classification_report(labels, y_pred_train, output_dict=True)
+    accuracy_train = accuracy_score(labels, y_pred_train) * 100
+
+    print("Hasil Evaluasi pada Data Training:")
+    print("Classification Report:")
+    print(classification_result_train)
+    print("Accuracy:", accuracy_train)
+
+    # Evaluasi model menggunakan data validasi
+    validation_data = []
+    validation_labels = []
+    for class_name in classes:
+        validation_path = os.path.join(dataset_path, 'validation', class_name)
+        image_files = os.listdir(validation_path)
+        for image_file in image_files:
+            image_path = os.path.join(validation_path, image_file)
+            image = Image.open(image_path)
+            features = extract_features(image)
+            label = class_name.replace("-", " ").title()
+            validation_data.append(features)
+            validation_labels.append(label)
+
+    # Ubah data validasi dan label menjadi array NumPy
+    validation_data = np.array(validation_data)
+    validation_labels = np.array(validation_labels)
+
+    # Melakukan prediksi pada data validasi
+    y_pred_validation = model.predict(validation_data)
+
+    # Menampilkan hasil evaluasi model pada data validasi
+    classification_result_validation = classification_report(validation_labels, y_pred_validation, output_dict=True)
+    accuracy_validation = accuracy_score(validation_labels, y_pred_validation) * 100
+
+    print("Hasil Evaluasi pada Data Validasi:")
+    print("Classification Report:")
+    print(classification_result_validation)
+    print("Accuracy:", accuracy_validation)
+
+    # Evaluasi model menggunakan data test
+    test_data = []
+    test_labels = []
+    for class_name in classes:
+        test_path = os.path.join(dataset_path, 'test', class_name)
+        image_files = os.listdir(test_path)
+        for image_file in image_files:
+            image_path = os.path.join(test_path, image_file)
+            image = Image.open(image_path)
+            features = extract_features(image)
+            label = class_name.replace("-", " ").title()
+            test_data.append(features)
+            test_labels.append(label)
+
+    # Ubah data test dan label menjadi array NumPy
+    test_data = np.array(test_data)
+    test_labels = np.array(test_labels)
+
+    # Melakukan prediksi pada data test
+    y_pred_test = model.predict(test_data)
+
+    # Menampilkan hasil evaluasi model pada data test
+    classification_result_test = classification_report(test_labels, y_pred_test, output_dict=True)
+    accuracy_test = accuracy_score(test_labels, y_pred_test) * 100
+
+    print("Hasil Evaluasi pada Data Test:")
+    print("Classification Report:")
+    print(classification_result_test)
+    print("Accuracy:", accuracy_test)
+
     result = {
-        'train_result': train_result,
-        'test_result':test_result
-
+        'train_result':  classification_result_train,
+        'validation_result': classification_result_validation,
+        'test_result': classification_result_test
     }
-    return result
+    return jsonify(result)
 
+
+# Fungsi untuk membuat jendela aplikasi menggunakan webview
 def create_window():
     webview.create_window("Deteksi Penyakit Daun Jagung", app, width=1500, height=1000, resizable=True)
 

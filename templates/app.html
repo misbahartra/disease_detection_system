@@ -95,7 +95,7 @@
                 <button class="btn btn-warning w-50 btn-lg" id="calculateColorMoments" type="button">Color
                     Moments</button>
 
-                <button class="btn btn-info w-50 btn-lg text-white" id="train" type="button">Deteksi Penyakit
+                <button class="btn btn-info w-50 btn-lg text-white" id="train" type="button">Training
                 </button>
                 <button class="btn btn-danger w-50 btn-lg" id="reset" type="button">Reset
                 </button>
@@ -110,9 +110,9 @@
 
 
 <!-- Modal -->
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+<div class="modal fade modal-lg" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
     aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-dialog-centered " role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modal-title"></h5>
@@ -142,7 +142,7 @@
             var buttons = document.querySelectorAll(".btn");
             for (var i = 0; i < buttons.length; i++) {
                 var buttonId = buttons[i].id;
-                if (buttonId !== "upload" && buttonId !== "reset") {
+                if (buttonId !== "upload" && buttonId !== "reset" && buttonId !== "train") {
                     buttons[i].disabled = disabled;
                 }
             }
@@ -288,7 +288,6 @@
                     console.log(error);
                 });
         }
-
         function trainingData() {
             const overlay = document.getElementById('loading-overlay');
             overlay.style.display = 'flex';
@@ -298,43 +297,104 @@
                 .then(function (response) {
                     overlay.style.display = 'none';
                     console.log('Berhasil Test');
-                    const testResult = JSON.parse(response.data.test_result);
-                    console.log(testResult);
+                    console.log(response.data);
+                    document.getElementById("modal-title").innerHTML = "Hasil";
 
                     // Convert the JSON response to HTML table
                     let table = '<table class="table table-striped" id="table-result">';
 
+                    // Judul dan Baris Akurasi
                     table += '<tr>';
-                    for (const item in testResult) {
-                        table += `<th>${item}</th>`;
-                    }
+                    table += '<th colspan="5">Hasil Pelatihan (Train)</th>';
+                    table += '</tr>';
+                    table += '<tr>';
+                    table += `<td colspan="5">Akurasi: ${response.data.train_result.accuracy.toFixed(2)}</td>`;
                     table += '</tr>';
 
+                    // Hasil Pelatihan
                     table += '<tr>';
-                    for (const item in testResult) {
-                        if (item === 'accuracy') {
-                            const accuracyValue = parseFloat(testResult[item]).toFixed(2);
-                            table += `<td>${accuracyValue} %</td>`;
-                        } else {
-                            table += `<td>${testResult[item]}</td>`;
+                    table += '<th>Label</th>';
+                    table += '<th>F1-Score</th>';
+                    table += '<th>Precision</th>';
+                    table += '<th>Recall</th>';
+                    table += '<th>Support</th>';
+                    table += '</tr>';
+                    for (const label in response.data.train_result) {
+                        if (label !== "accuracy" && label !== "macro avg" && label !== "weighted avg") {
+                            table += '<tr>';
+                            table += `<td>${label}</td>`;
+                            for (const key in response.data.train_result[label]) {
+                                table += `<td>${response.data.train_result[label][key].toFixed(2)}</td>`;
+                            }
+                            table += '</tr>';
                         }
                     }
+
+                    // Hasil Validasi
+                    table += '<tr>';
+                    table += '<th colspan="5">Hasil Validasi (Validation) </th>';
                     table += '</tr>';
+                    table += '<tr>';
+                    table += `<td colspan="5">Akurasi: ${response.data.validation_result.accuracy.toFixed(2)}</td>`;
+                    table += '</tr>';
+                    table += '<tr>';
+                    table += '<th>Label</th>';
+                    table += '<th>F1-Score</th>';
+                    table += '<th>Precision</th>';
+                    table += '<th>Recall</th>';
+                    table += '<th>Support</th>';
+                    table += '</tr>';
+                    for (const label in response.data.validation_result) {
+                        if (label !== "accuracy" && label !== "macro avg" && label !== "weighted avg") {
+                            table += '<tr>';
+                            table += `<td>${label}</td>`;
+                            for (const key in response.data.validation_result[label]) {
+                                table += `<td>${response.data.validation_result[label][key].toFixed(2)}</td>`;
+                            }
+                            table += '</tr>';
+                        }
+                    }
+
+                    // Hasil Uji
+                    table += '<tr>';
+                    table += '<th colspan="5">Hasil Test (Test)</th>';
+                    table += '</tr>';
+                    table += '<tr>';
+                    table += `<td colspan="5">Akurasi: ${response.data.test_result.accuracy.toFixed(2)}</td>`;
+                    table += '</tr>';
+                    table += '<tr>';
+                    table += '<th>Label</th>';
+                    table += '<th>F1-Score</th>';
+                    table += '<th>Precision</th>';
+                    table += '<th>Recall</th>';
+                    table += '<th>Support</th>';
+                    table += '</tr>';
+                    for (const label in response.data.test_result) {
+                        if (label !== "accuracy" && label !== "macro avg" && label !== "weighted avg") {
+                            table += '<tr>';
+                            table += `<td>${label}</td>`;
+                            for (const key in response.data.test_result[label]) {
+                                table += `<td>${response.data.test_result[label][key].toFixed(2)}</td>`;
+                            }
+                            table += '</tr>';
+                        }
+                    }
 
                     table += '</table>';
 
-                    // Display the table in a target element
+                    // Menampilkan tabel pada elemen target
                     const targetElement = document.getElementById('result');
                     targetElement.innerHTML = table;
                 })
                 .then(function () {
-                    $('#myModal').modal('show')
+                    $('#myModal').modal('show');
                 })
                 .catch(function (error) {
                     console.log(error);
                     overlay.style.display = 'none';
                 });
         }
+
     });
 
 
