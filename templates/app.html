@@ -4,6 +4,11 @@
 
 {% block head %}
 <style>
+    .btn-reset {
+        width: 200px;
+        height: 50px;
+    }
+
     .container {
         position: relative;
         height: 75vh;
@@ -97,9 +102,15 @@
 
                 <button class="btn btn-info w-50 btn-lg text-white" id="train" type="button">Training
                 </button>
-                <button class="btn btn-danger w-50 btn-lg" id="reset" type="button">Reset
+                <button class="btn btn-primary w-50 btn-lg text-white" id="testing" type="button">Testing
                 </button>
+
             </div>
+        </div>
+        <div class="col-md-12">
+            <button class="btn btn-danger  btn-lg btn-reset" id="reset" type="button">Reset
+            </button>
+
         </div>
 
     </div>
@@ -124,7 +135,8 @@
                 <div id="result"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="btn-modal-close">
+                    Close</button>
             </div>
         </div>
     </div>
@@ -142,7 +154,7 @@
             var buttons = document.querySelectorAll(".btn");
             for (var i = 0; i < buttons.length; i++) {
                 var buttonId = buttons[i].id;
-                if (buttonId !== "upload" && buttonId !== "reset" && buttonId !== "train") {
+                if (buttonId !== "upload" && buttonId !== "reset" && buttonId !== "train" && buttonId !== "btn-modal-close") {
                     buttons[i].disabled = disabled;
                 }
             }
@@ -150,6 +162,10 @@
         $("#train").on("click", function () {
             trainingData()
         });
+
+        $("#testing").on("click", function () {
+            testingImage()
+        })
 
         $("#upload").on("click", function () {
             uploadImage()
@@ -288,112 +304,185 @@
                     console.log(error);
                 });
         }
+
+
         function trainingData() {
+    const overlay = document.getElementById('loading-overlay');
+    overlay.style.display = 'flex';
+    console.log('Train Function Run');
+    axios
+        .get("/train")
+        .then(function (response) {
+            overlay.style.display = 'none';
+            console.log('Berhasil Test');
+            console.log(response.data);
+            document.getElementById("modal-title").innerHTML = "Hasil";
+
+            // Convert the JSON response to HTML table
+            let table = '<table class="table table-striped" id="table-result">';
+
+            response.data.forEach(function (result) {
+                const scenarioName = result.scenario;
+                const accuracyTest = result.accuracy_test.toFixed(2);
+                const classificationReportTest = result.classification_report_test;
+                const classificationReportTrain = result.classification_report_train;
+
+                // Judul dan Baris Akurasi
+                table += `<tr>
+                    <th colspan="6">Hasil ${scenarioName}</th>
+                </tr>`;
+                table += `<tr>
+                    <td colspan="6">Akurasi (Test): ${accuracyTest}%</td>
+                </tr>`;
+
+                // Header Kolom
+                table += `<tr>
+                    <th>Label</th>
+                    <th>F1-Score (Test)</th>
+                    <th>Precision (Test)</th>
+                    <th>Recall (Test)</th>
+                    <th>Support (Test)</th>
+                    <th>Support (Train)</th>
+                </tr>`;
+
+                for (const label in classificationReportTest) {
+                    if (
+                        label !== "accuracy" &&
+                        label !== "macro avg" &&
+                        label !== "weighted avg"
+                    ) {
+                        const f1ScoreTest = classificationReportTest[label]["f1-score"].toFixed(2);
+                        const precisionTest = classificationReportTest[label]["precision"].toFixed(2);
+                        const recallTest = classificationReportTest[label]["recall"].toFixed(2);
+                        const supportTest = classificationReportTest[label]["support"];
+                        const supportTrain = classificationReportTrain[label]["support"];
+                        table += `<tr>
+                            <td>${label}</td>
+                            <td>${f1ScoreTest}</td>
+                            <td>${precisionTest}</td>
+                            <td>${recallTest}</td>
+                            <td>${supportTest}</td>
+                            <td>${supportTrain}</td>
+                        </tr>`;
+                    }
+                }
+            });
+
+            table += '</table>';
+
+            // Menampilkan tabel pada elemen target
+            const targetElement = document.getElementById('result');
+            targetElement.innerHTML = table;
+        })
+        .then(function () {
+            $('#myModal').modal('show');
+        })
+        .catch(function (error) {
+            console.log(error);
+            overlay.style.display = 'none';
+        });
+}
+
+        function testingImage() {
+            var testImagePath = "{{ url_for('uploaded_file', filename='test_image.jpg') }}";
             const overlay = document.getElementById('loading-overlay');
             overlay.style.display = 'flex';
-            console.log('Train Function Run');
-            axios
-                .get("/train")
+            axios.post("/testing_image", { image_path: testImagePath })
                 .then(function (response) {
                     overlay.style.display = 'none';
-                    console.log('Berhasil Test');
-                    console.log(response.data);
-                    document.getElementById("modal-title").innerHTML = "Hasil";
+                    console.log(response);
 
-                    // Convert the JSON response to HTML table
-                    let table = '<table class="table table-striped" id="table-result">';
+                    // Mendapatkan hasil prediksi dari respons
+                    var predictions = response.data.predictions;
 
-                    // Judul dan Baris Akurasi
-                    table += '<tr>';
-                    table += '<th colspan="5">Hasil Pelatihan (Train)</th>';
-                    table += '</tr>';
-                    table += '<tr>';
-                    table += `<td colspan="5">Akurasi: ${response.data.train_result.accuracy.toFixed(2)}</td>`;
-                    table += '</tr>';
+                    // Membuat tabel untuk menampilkan hasil prediksi dari setiap skenario
+                    var resultTable = '<table class="table"><thead><tr><th>Skenario</th><th>Hasil Prediksi</th><th>Persentase Keputusan</th></tr></thead><tbody>';
 
-                    // Hasil Pelatihan
-                    table += '<tr>';
-                    table += '<th>Label</th>';
-                    table += '<th>F1-Score</th>';
-                    table += '<th>Precision</th>';
-                    table += '<th>Recall</th>';
-                    table += '<th>Support</th>';
-                    table += '</tr>';
-                    for (const label in response.data.train_result) {
-                        if (label !== "accuracy" && label !== "macro avg" && label !== "weighted avg") {
-                            table += '<tr>';
-                            table += `<td>${label}</td>`;
-                            for (const key in response.data.train_result[label]) {
-                                table += `<td>${response.data.train_result[label][key].toFixed(2)}</td>`;
-                            }
-                            table += '</tr>';
-                        }
+                    // Meloopi setiap prediksi untuk menambahkannya ke dalam tabel
+                    for (var i = 0; i < predictions.length; i++) {
+                        var scenario = predictions[i].scenario;
+                        var result = predictions[i].result;
+                        var decisionPercentage = predictions[i].decision_percentage;
+                        var otherDiseasePercentages = predictions[i].other_disease_percentages;
+
+                        // Menambahkan tanda persen (%) pada persentase keputusan
+                        var simplifiedPercentage = Number.isFinite(decisionPercentage) ? decisionPercentage.toFixed(2) + '%' : '-';
+
+                        resultTable += '<tr><td>' + scenario + '</td><td>' + result + '</td><td>' + simplifiedPercentage + '</td></tr>';
+                    }
+                    // Menambahkan baris teks pada bagian bawah tabel
+                    var bestScenario = getBestScenario(predictions);
+                    var bestAccuracy = bestScenario.decision_percentage.toFixed(2) + '%';
+                    var bottomText = 'Hasil terbaik pada identifikasi penyakit daun ini ditunjukkan  dengan nilai akurasi  ' + bestAccuracy + 'yang terdapat  pada skenario  masing-masing.';
+
+                    var bottomRow = '<tr><td colspan="3" class="text-center"><h5><b>' + bottomText + '</b></h5></td></tr>';
+                    resultTable += bottomRow;
+                    resultTable += '</tbody></table>';
+
+
+                    // Menambahkan tombol "Show Detail" untuk menampilkan tabel persentase penyakit lain
+                    resultTable += '<button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">Persentase Penyakit Lain</button>';
+                    resultTable += '<div class="collapse" id="collapseExample">';
+                    resultTable += '<table class="table">';
+                    resultTable += '<thead><tr><th>Skenario</th><th>Bercak Daun</th><th>Hawar Daun</th><th>Karat Daun</th><th>Sehat</th></tr></thead>';
+                    resultTable += '<tbody>';
+
+                    // Meloopi setiap skenario untuk menambahkan baris tabel persentase penyakit lain
+                    for (var i = 0; i < predictions.length; i++) {
+                        var scenario = predictions[i].scenario;
+                        var otherDiseasePercentages = predictions[i].other_disease_percentages;
+
+                        resultTable += '<tr>';
+                        resultTable += '<td>' + scenario + '</td>';
+                        resultTable += '<td>' + (otherDiseasePercentages['Bercak Daun']).toFixed(2) + '%</td>';
+                        resultTable += '<td>' + (otherDiseasePercentages['Hawar Daun']).toFixed(2) + '%</td>';
+                        resultTable += '<td>' + (otherDiseasePercentages['Karat Daun']).toFixed(2) + '%</td>';
+                        resultTable += '<td>' + (otherDiseasePercentages['Sehat']).toFixed(2) + '%</td>';
+                        resultTable += '</tr>';
                     }
 
-                    // Hasil Validasi
-                    table += '<tr>';
-                    table += '<th colspan="5">Hasil Validasi (Validation) </th>';
-                    table += '</tr>';
-                    table += '<tr>';
-                    table += `<td colspan="5">Akurasi: ${response.data.validation_result.accuracy.toFixed(2)}</td>`;
-                    table += '</tr>';
-                    table += '<tr>';
-                    table += '<th>Label</th>';
-                    table += '<th>F1-Score</th>';
-                    table += '<th>Precision</th>';
-                    table += '<th>Recall</th>';
-                    table += '<th>Support</th>';
-                    table += '</tr>';
-                    for (const label in response.data.validation_result) {
-                        if (label !== "accuracy" && label !== "macro avg" && label !== "weighted avg") {
-                            table += '<tr>';
-                            table += `<td>${label}</td>`;
-                            for (const key in response.data.validation_result[label]) {
-                                table += `<td>${response.data.validation_result[label][key].toFixed(2)}</td>`;
-                            }
-                            table += '</tr>';
-                        }
-                    }
+                    resultTable += '</tbody>';
+                    resultTable += '</table>';
+                    resultTable += '</div>';
 
-                    // Hasil Uji
-                    table += '<tr>';
-                    table += '<th colspan="5">Hasil Test (Test)</th>';
-                    table += '</tr>';
-                    table += '<tr>';
-                    table += `<td colspan="5">Akurasi: ${response.data.test_result.accuracy.toFixed(2)}</td>`;
-                    table += '</tr>';
-                    table += '<tr>';
-                    table += '<th>Label</th>';
-                    table += '<th>F1-Score</th>';
-                    table += '<th>Precision</th>';
-                    table += '<th>Recall</th>';
-                    table += '<th>Support</th>';
-                    table += '</tr>';
-                    for (const label in response.data.test_result) {
-                        if (label !== "accuracy" && label !== "macro avg" && label !== "weighted avg") {
-                            table += '<tr>';
-                            table += `<td>${label}</td>`;
-                            for (const key in response.data.test_result[label]) {
-                                table += `<td>${response.data.test_result[label][key].toFixed(2)}</td>`;
-                            }
-                            table += '</tr>';
-                        }
-                    }
+                    // Memasukkan tabel yang telah diperbarui ke dalam elemen dengan ID "result"
+                    document.getElementById("result").innerHTML = resultTable;
 
-                    table += '</table>';
-
-                    // Menampilkan tabel pada elemen target
-                    const targetElement = document.getElementById('result');
-                    targetElement.innerHTML = table;
-                })
-                .then(function () {
+                    // Tampilkan modal
                     $('#myModal').modal('show');
                 })
                 .catch(function (error) {
                     console.log(error);
-                    overlay.style.display = 'none';
+                    overlay.style.display = 'flex';
                 });
         }
+
+
+
+
+
+
+
+        // Fungsi untuk mendapatkan skenario dengan persentase tertinggi
+        function getBestScenario(predictions) {
+            var bestScenario = predictions[0];
+            for (var i = 1; i < predictions.length; i++) {
+                var currentScenario = predictions[i];
+                if (currentScenario.decision_percentage[0] > bestScenario.decision_percentage[0]) {
+                    bestScenario = currentScenario;
+                }
+            }
+            return bestScenario;
+        }
+
+        // Fungsi untuk mendapatkan nama kelas dari hasil prediksi
+        function getClassNames(result) {
+            var classNames = Object.keys(result[0]);
+            classNames.splice(classNames.indexOf('scenario'), 1); // Menghapus properti 'scenario'
+            return classNames;
+        }
+
+
 
     });
 

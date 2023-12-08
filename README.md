@@ -44,3 +44,14 @@ Setelah di clone, buat folder dengan nama "uploads"
 
 
 
+
+
+
+## Installation
+
+Masuk ke Foldernya
+
+```bash
+ python app.py
+```
+    

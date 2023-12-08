@@ -8,7 +8,9 @@ import webview
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report, accuracy_score
+import joblib
 import json
+from sklearn.preprocessing import MinMaxScaler
 
 app = Flask(__name__)
 
@@ -19,6 +21,9 @@ gray_image = None
 counter = 1
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+
 
 # Fungsi untuk menghitung momen warna
 def calculate_color_moments(image):
@@ -243,126 +248,230 @@ def test_model(data, labels):
     return json.dumps(result)
 
 
-# Route untuk melatih model
+import joblib
+
 @app.route("/train", methods=["GET"])
 def train_model_route():
     print("Training sedang berjalan")
+
     dataset_path = 'dataset'
     classes = ['hawar-daun', 'karat-daun', 'bercak-daun', 'sehat']
-    data = []
-    labels = []
+    scenarios = [
+        {'name': 'scenario_1', 'train_size': 150, 'test_size': 50},
+        {'name': 'scenario_2', 'train_size': 170, 'test_size': 30},
+        {'name': 'scenario_3', 'train_size': 160, 'test_size': 40}
+    ]
 
-    for class_name in classes:
-        train_path = os.path.join(dataset_path, 'train', class_name)
-        image_files = os.listdir(train_path)
-        for image_file in image_files:
-            image_path = os.path.join(train_path, image_file)
-            image = Image.open(image_path)
-            features = extract_features(image)
-            label = class_name.replace("-", " ").title()
-            data.append(features)
-            labels.append(label)
+    results = []
 
-    # Ubah data dan label menjadi array NumPy
-    data = np.array(data)
-    labels = np.array(labels)
+    for scenario in scenarios:
+        scenario_name = scenario['name']
+        train_size = scenario['train_size']
+        test_size = scenario['test_size']
 
-    # Inisialisasi model SVM
-    model = SVC(kernel='linear')
+        train_data = []
+        train_labels = []
+        test_data = []
+        test_labels = []
 
-    # Melatih model dengan data training
-    model.fit(data, labels)
+        for class_name in classes:
+            # Memuat data training
+            train_path = os.path.join(dataset_path, scenario_name, 'train', class_name)
+            image_files = os.listdir(train_path)
+            for image_file in image_files:
+                image_path = os.path.join(train_path, image_file)
+                image = Image.open(image_path)
+                features = extract_features(image)
+                label = class_name.replace("-", " ").title()
+                train_data.append(features)
+                train_labels.append(label)
 
-    # Menampilkan hasil evaluasi model pada data training
-    y_pred_train = model.predict(data)
-    classification_result_train = classification_report(labels, y_pred_train, output_dict=True)
-    accuracy_train = accuracy_score(labels, y_pred_train) * 100
+            # Memuat data test
+            test_path = os.path.join(dataset_path, scenario_name, 'test', class_name)
+            image_files = os.listdir(test_path)
+            for image_file in image_files:
+                image_path = os.path.join(test_path, image_file)
+                image = Image.open(image_path)
+                features = extract_features(image)
+                label = class_name.replace("-", " ").title()
+                test_data.append(features)
+                test_labels.append(label)
 
-    print("Hasil Evaluasi pada Data Training:")
-    print("Classification Report:")
-    print(classification_result_train)
-    print("Accuracy:", accuracy_train)
+        # Ubah data dan label menjadi array NumPy
+        train_data = np.array(train_data)
+        train_labels = np.array(train_labels)
+        test_data = np.array(test_data)
+        test_labels = np.array(test_labels)
 
-    # Evaluasi model menggunakan data validasi
-    validation_data = []
-    validation_labels = []
-    for class_name in classes:
-        validation_path = os.path.join(dataset_path, 'validation', class_name)
-        image_files = os.listdir(validation_path)
-        for image_file in image_files:
-            image_path = os.path.join(validation_path, image_file)
-            image = Image.open(image_path)
-            features = extract_features(image)
-            label = class_name.replace("-", " ").title()
-            validation_data.append(features)
-            validation_labels.append(label)
+        # Inisialisasi model SVM
+        model = SVC(kernel='linear')
 
-    # Ubah data validasi dan label menjadi array NumPy
-    validation_data = np.array(validation_data)
-    validation_labels = np.array(validation_labels)
+        # Melatih model dengan data training
+        model.fit(train_data, train_labels)
 
-    # Melakukan prediksi pada data validasi
-    y_pred_validation = model.predict(validation_data)
+        # Menyimpan model ke file
+        model_file = f'model_{scenario_name}.pkl'
+        joblib.dump(model, model_file)
 
-    # Menampilkan hasil evaluasi model pada data validasi
-    classification_result_validation = classification_report(validation_labels, y_pred_validation, output_dict=True)
-    accuracy_validation = accuracy_score(validation_labels, y_pred_validation) * 100
+        # Melakukan prediksi pada data training
+        y_pred_train = model.predict(train_data)
 
-    print("Hasil Evaluasi pada Data Validasi:")
-    print("Classification Report:")
-    print(classification_result_validation)
-    print("Accuracy:", accuracy_validation)
+        # Menampilkan hasil evaluasi model pada data training
+        classification_result_train = classification_report(train_labels, y_pred_train, output_dict=True)
+        accuracy_train = accuracy_score(train_labels, y_pred_train) * 100
 
-    # Evaluasi model menggunakan data test
-    test_data = []
-    test_labels = []
-    for class_name in classes:
-        test_path = os.path.join(dataset_path, 'test', class_name)
-        image_files = os.listdir(test_path)
-        for image_file in image_files:
-            image_path = os.path.join(test_path, image_file)
-            image = Image.open(image_path)
-            features = extract_features(image)
-            label = class_name.replace("-", " ").title()
-            test_data.append(features)
-            test_labels.append(label)
+        # Melakukan prediksi pada data test
+        y_pred_test = model.predict(test_data)
 
-    # Ubah data test dan label menjadi array NumPy
-    test_data = np.array(test_data)
-    test_labels = np.array(test_labels)
+        # Menampilkan hasil evaluasi model pada data test
+        classification_result_test = classification_report(test_labels, y_pred_test, output_dict=True)
+        accuracy_test = accuracy_score(test_labels, y_pred_test) * 100
 
-    # Melakukan prediksi pada data test
-    y_pred_test = model.predict(test_data)
+        print(f"Hasil Evaluasi pada Skenario {scenario_name}:")
+        print("Classification Report (Training):")
+        print(classification_result_train)
+        print("Accuracy (Training):", accuracy_train)
+        print("Classification Report (Test):")
+        print(classification_result_test)
+        print("Accuracy (Test):", accuracy_test)
 
-    # Menampilkan hasil evaluasi model pada data test
-    classification_result_test = classification_report(test_labels, y_pred_test, output_dict=True)
-    accuracy_test = accuracy_score(test_labels, y_pred_test) * 100
+        result = {
+            'scenario': scenario_name,
+            'accuracy_train': accuracy_train,
+            'classification_report_train': classification_result_train,
+            'accuracy_test': accuracy_test,
+            'classification_report_test': classification_result_test,
+            'model_file': model_file
+        }
+        results.append(result)
 
-    print("Hasil Evaluasi pada Data Test:")
-    print("Classification Report:")
-    print(classification_result_test)
-    print("Accuracy:", accuracy_test)
+    return jsonify(results)
 
+
+
+from scipy.spatial.distance import euclidean
+
+
+
+# Fungsi untuk menghitung persentase kemiripan
+def calculate_similarity_percentage(test_data, model):
+    class_distances = model.decision_function(test_data)
+    max_distance = np.max(class_distances)
+    min_distance = np.min(class_distances)
+    similarity_percentage = ((max_distance - class_distances) / (max_distance - min_distance)) * 100
+    return similarity_percentage
+
+@app.route("/testing_image", methods=["POST"])
+def testing_image():
+    global image
+
+    # Memuat model untuk setiap skenario
+    model_scenario_1 = joblib.load('model_scenario_1.pkl')
+    model_scenario_2 = joblib.load('model_scenario_2.pkl')
+    model_scenario_3 = joblib.load('model_scenario_3.pkl')
+
+    features = extract_features(image)
+
+    # Menginisialisasi hasil prediksi dan persentase keputusan untuk setiap skenario
+    predictions = []
+
+    # Prediksi kelas untuk setiap skenario
+    predicted_class_scenario_1 = model_scenario_1.predict([features])[0]
+    predicted_class_scenario_2 = model_scenario_2.predict([features])[0]
+    predicted_class_scenario_3 = model_scenario_3.predict([features])[0]
+
+    # Menghitung persentase keputusan untuk setiap skenario
+    decision_scores_scenario_1 = model_scenario_1.decision_function([features])[0]
+    decision_scores_scenario_2 = model_scenario_2.decision_function([features])[0]
+    decision_scores_scenario_3 = model_scenario_3.decision_function([features])[0]
+    decision_percentage_scenario_1 = (decision_scores_scenario_1 - decision_scores_scenario_1.min()) / (decision_scores_scenario_1.max() - decision_scores_scenario_1.min()) * 100
+    decision_percentage_scenario_2 = (decision_scores_scenario_2 - decision_scores_scenario_2.min()) / (decision_scores_scenario_2.max() - decision_scores_scenario_2.min()) * 100
+    decision_percentage_scenario_3 = (decision_scores_scenario_3 - decision_scores_scenario_3.min()) / (decision_scores_scenario_3.max() - decision_scores_scenario_3.min()) * 100
+
+    # Menambahkan hasil prediksi dan persentase keputusan ke dalam daftar predictions
+    predictions.append({
+        "scenario": "scenario_1",
+        "result": predicted_class_scenario_1,
+        "decision_percentage": get_decision_percentage(predicted_class_scenario_1, decision_percentage_scenario_1),
+        "other_disease_percentages": get_other_disease_percentages(decision_percentage_scenario_1)
+    })
+    predictions.append({
+        "scenario": "scenario_2",
+        "result": predicted_class_scenario_2,
+        "decision_percentage": get_decision_percentage(predicted_class_scenario_2, decision_percentage_scenario_2),
+        "other_disease_percentages": get_other_disease_percentages(decision_percentage_scenario_2)
+    })
+    predictions.append({
+        "scenario": "scenario_3",
+        "result": predicted_class_scenario_3,
+        "decision_percentage": get_decision_percentage(predicted_class_scenario_3, decision_percentage_scenario_3),
+        "other_disease_percentages": get_other_disease_percentages(decision_percentage_scenario_3)
+    })
+
+    # Menampilkan hasil prediksi dan persentase keputusan ke dalam format JSON
     result = {
-        'train_result':  classification_result_train,
-        'validation_result': classification_result_validation,
-        'test_result': classification_result_test
+        "predictions": predictions
     }
+    
+    print(result)
+    for prediction in predictions:
+        print("Prediksi Penyakit (" + prediction["scenario"] + "):", prediction["result"])
+        print("Persentase Keputusan (" + prediction["scenario"] + "):", prediction["decision_percentage"])
+
+        print("Persentase Penyakit Lain (" + prediction["scenario"] + "):")
+        for disease, percentage in prediction["other_disease_percentages"].items():
+            print(disease + ":", percentage)
+
     return jsonify(result)
 
 
+def get_decision_percentage(predicted_class, decision_percentage):
+    class_names = ['Bercak Daun', 'Hawar Daun', 'Karat Daun', 'Sehat']
+    class_index = class_names.index(predicted_class)
+    return decision_percentage[class_index]
+
+
+def get_other_disease_percentages(decision_percentage):
+    disease_names = ['Bercak Daun', 'Hawar Daun', 'Karat Daun', 'Sehat']
+    disease_percentages = {}
+    for i, percentage in enumerate(decision_percentage):
+        disease = disease_names[i]
+        disease_percentages[disease] = percentage
+    return disease_percentages
+
+
+def get_decision_percentage(predicted_class, decision_percentage):
+    class_names = ['Bercak Daun', 'Hawar Daun', 'Karat Daun', 'Sehat']
+    class_index = class_names.index(predicted_class)
+    return decision_percentage[class_index]
+
+
+
+    
+def extract_features_from_class(class_name):
+    dataset_path = 'dataset'
+    test_path = os.path.join(dataset_path, 'test', class_name.replace(" ", "-").lower())
+    image_files = os.listdir(test_path)
+    image = Image.open(os.path.join(test_path, image_files[0]))
+    features = extract_features(image)
+    return features
+
+
+
+
+
 # Fungsi untuk membuat jendela aplikasi menggunakan webview
-def create_window():
-    webview.create_window("Deteksi Penyakit Daun Jagung", app, width=1500, height=1000, resizable=True)
+# def create_window():
+#     webview.create_window("Deteksi Penyakit Daun Jagung", app, width=1500, height=1000, resizable=True)
 
-
-if __name__ == "__main__":
-    from threading import Thread
-    thread = Thread(target=create_window)
-    thread.start()
-
-    # Jalankan aplikasi Pywebview
-    webview.start()
 
 # if __name__ == "__main__":
-#     app.run(debug=True)
+#     from threading import Thread
+#     thread = Thread(target=create_window)
+#     thread.start()
+
+#     # Jalankan aplikasi Pywebview
+#     webview.start()
+
+if __name__ == "__main__":
+    app.run(debug=True)
